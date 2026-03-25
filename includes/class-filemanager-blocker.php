@@ -61,21 +61,21 @@ class DN_FileManager_Blocker {
         $self = $this;
         
         // Block File Manager plugin installation via upgrader
-        add_filter('upgrader_pre_install', function ($return, $package, $upgrader) use ($self) {
+        add_filter('upgrader_pre_install', function ($return, $package, $upgrader = null) use ($self) {
             $plugin_slug = '';
             $plugin_name = '';
             
             // Get plugin info from different sources
-            if (isset($upgrader->skin->plugin)) {
+            if ($upgrader && isset($upgrader->skin->plugin)) {
                 $plugin_slug = $upgrader->skin->plugin;
-            } elseif (isset($upgrader->skin->plugin_info) && !empty($upgrader->skin->plugin_info)) {
+            } elseif ($upgrader && isset($upgrader->skin->plugin_info) && !empty($upgrader->skin->plugin_info)) {
                 if (isset($upgrader->skin->plugin_info['slug'])) {
                     $plugin_slug = $upgrader->skin->plugin_info['slug'];
                 }
                 if (isset($upgrader->skin->plugin_info['name'])) {
                     $plugin_name = $upgrader->skin->plugin_info['name'];
                 }
-            } elseif (isset($upgrader->skin->api) && !empty($upgrader->skin->api)) {
+            } elseif ($upgrader && isset($upgrader->skin->api) && !empty($upgrader->skin->api)) {
                 if (isset($upgrader->skin->api->slug)) {
                     $plugin_slug = $upgrader->skin->api->slug;
                 }
@@ -90,12 +90,28 @@ class DN_FileManager_Blocker {
                     return new WP_Error('filemanager_blocked', 'Cài đặt plugin File Manager đã bị chặn vì lý do bảo mật.');
                 }
             }
+
+            // Fallback: if WP doesn't pass $upgrader (or we can't extract slug/name), try inspecting the ZIP.
+            $package_lower = is_string($package) ? strtolower($package) : '';
+            if (empty($plugin_slug) && empty($plugin_name) && is_string($package) && function_exists('zip_open') && substr($package_lower, -4) === '.zip' && @is_readable($package)) {
+                $zip = zip_open($package);
+                if (is_resource($zip)) {
+                    while ($zip_entry = zip_read($zip)) {
+                        $entry_name = zip_entry_name($zip_entry);
+                        if ($entry_name && $self->is_filemanager_plugin($entry_name, $entry_name)) {
+                            zip_close($zip);
+                            return new WP_Error('filemanager_blocked', 'Cài đặt plugin File Manager đã bị chặn vì lý do bảo mật.');
+                        }
+                    }
+                    zip_close($zip);
+                }
+            }
             
             return $return;
         }, 10, 3);
         
         // Block File Manager plugin installation via plugins_api
-        add_filter('plugins_api_result', function ($result, $action, $args) use ($self) {
+        add_filter('plugins_api_result', function ($result, $action, $args = null) use ($self) {
             if ($action === 'plugin_information' && isset($result->slug)) {
                 if ($self->is_filemanager_plugin($result->slug, isset($result->name) ? $result->name : '')) {
                     return new WP_Error('filemanager_blocked', 'Plugin File Manager đã bị chặn vì lý do bảo mật.');
@@ -105,7 +121,7 @@ class DN_FileManager_Blocker {
         }, 10, 3);
         
         // Block File Manager plugin search results
-        add_filter('plugins_api_result', function ($result, $action, $args) use ($self) {
+        add_filter('plugins_api_result', function ($result, $action, $args = null) use ($self) {
             if ($action === 'query_plugins' && isset($result->plugins) && is_array($result->plugins)) {
                 $filtered_plugins = array();
                 foreach ($result->plugins as $plugin) {
