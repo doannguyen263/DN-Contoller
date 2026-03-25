@@ -9,6 +9,13 @@ if (!defined('ABSPATH')) {
 }
 
 class DN_Controller_Admin {
+
+    /**
+     * Prevent double-processing in a single request.
+     *
+     * @var bool
+     */
+    private static $did_handle_submit = false;
     
     /**
      * Initialize admin
@@ -35,9 +42,15 @@ class DN_Controller_Admin {
      * Handle form submission
      */
     public function handle_form_submit() {
+        if (self::$did_handle_submit) {
+            return;
+        }
+
         if (!isset($_POST['disable_wp_updates_submit']) || !current_user_can('manage_options')) {
             return;
         }
+
+        self::$did_handle_submit = true;
         
         check_admin_referer('disable_wp_updates_nonce');
         
@@ -66,13 +79,17 @@ class DN_Controller_Admin {
         $messages[] = $install_disabled === '1' ? 'Đã bật chặn cài plugin.' : 'Đã tắt chặn cài plugin.';
         $messages[] = $filemanager_blocked === '1' ? 'Đã bật chặn plugin File Manager.' : 'Đã tắt chặn plugin File Manager.';
         $messages[] = $login_blocked === '1' ? 'Đã bật chặn đăng nhập/đăng ký username.' : 'Đã tắt chặn đăng nhập/đăng ký username.';
-        
-        add_settings_error(
-            'disable_wp_updates',
-            'settings_updated',
-            implode(' ', $messages),
-            'success'
+
+        // Store notice for the next request (PRG pattern) to avoid duplicates.
+        $user_id = get_current_user_id();
+        set_transient('dn_controller_settings_notice_' . $user_id, implode(' ', $messages), 30);
+
+        $redirect_url = add_query_arg(
+            array('page' => 'dn-controller', 'dn_controller_updated' => '1'),
+            admin_url('options-general.php')
         );
+        wp_safe_redirect($redirect_url);
+        exit;
     }
     
     /**
@@ -81,6 +98,15 @@ class DN_Controller_Admin {
     public function render_settings_page() {
         if (!current_user_can('manage_options')) {
             return;
+        }
+
+        if (isset($_GET['dn_controller_updated']) && $_GET['dn_controller_updated'] === '1') {
+            $user_id = get_current_user_id();
+            $notice = get_transient('dn_controller_settings_notice_' . $user_id);
+            if (!empty($notice)) {
+                add_settings_error('disable_wp_updates', 'settings_updated', $notice, 'success');
+                delete_transient('dn_controller_settings_notice_' . $user_id);
+            }
         }
         
         $controller = DN_Controller::get_instance();
