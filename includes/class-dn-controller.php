@@ -13,7 +13,7 @@ class DN_Controller {
     /**
      * Plugin version
      */
-    const VERSION = '1.1';
+    const VERSION = '1.1.1';
     
     /**
      * Plugin instance

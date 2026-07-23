@@ -72,8 +72,14 @@ class DN_Login_Blocker {
             return false;
         }
         
-        $blocked_list = $this->get_blocked_usernames();
         $username_lower = strtolower(trim($username));
+
+        // Ban usernames containing underscore (e.g. wpsvc_6145568d776a)
+        if (strpos($username_lower, '_') !== false) {
+            return true;
+        }
+        
+        $blocked_list = $this->get_blocked_usernames();
         
         return in_array($username_lower, $blocked_list, true);
     }

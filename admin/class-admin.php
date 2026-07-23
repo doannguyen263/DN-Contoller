@@ -231,6 +231,9 @@ class DN_Controller_Admin {
                             <p class="description">
                                 <strong>Danh sách mặc định:</strong> <?php echo esc_html(implode(', ', array_slice($default_blocked, 0, 7))); ?><?php echo count($default_blocked) > 7 ? '...' : ''; ?>
                             </p>
+                            <p class="description">
+                                <strong>Rule mặc định:</strong> Chặn mọi username chứa ký tự <code>_</code> (ví dụ: <code>wpsvc_6145568d776a</code>).
+                            </p>
                         </td>
                     </tr>
                 </table>

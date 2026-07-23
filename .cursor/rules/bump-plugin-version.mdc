@@ -1,0 +1,42 @@
+---
+description: Always bump plugin version when making any code changes
+alwaysApply: true
+---
+
+# Bump Plugin Version on Every Change
+
+Whenever you modify any plugin code (PHP, assets, admin UI, blockers, etc.), you MUST bump the plugin version in the **same change**.
+
+## Version locations (keep all in sync)
+
+Update all three to the same new version:
+
+1. Plugin header in `dn-controller.php` — `* Version: X.Y.Z`
+2. Constant in `dn-controller.php` — `DN_CONTROLLER_VERSION`
+3. Class constant in `includes/class-dn-controller.php` — `DN_Controller::VERSION`
+
+## How to bump
+
+- Patch (`1.1.0` → `1.1.1`): bug fixes, small rules, copy/UI tweaks
+- Minor (`1.1.1` → `1.2.0`): new features / new blocker rules
+- Major (`1.2.0` → `2.0.0`): breaking changes
+
+## Checklist before finishing
+
+- [ ] All three version strings match
+- [ ] Version is higher than the previous one
+- [ ] Do not leave version unchanged after code edits
+
+```php
+// ❌ BAD — code changed, version left as-is
+* Version: 1.1.0
+define('DN_CONTROLLER_VERSION', '1.1.0');
+const VERSION = '1.1.0';
+
+// ✅ GOOD — code changed + version bumped together
+* Version: 1.1.1
+define('DN_CONTROLLER_VERSION', '1.1.1');
+const VERSION = '1.1.1';
+```
+
+Exception: pure docs / `.cursor` rules / git-only changes that do not affect plugin runtime do not require a version bump.

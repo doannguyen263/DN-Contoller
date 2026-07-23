@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DN Contoller
  * Description: DN Contoller.
- * Version: 1.0.4
+ * Version: 1.1.1
  * Author: You
  */
 
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 if (!defined('DN_CONTROLLER_VERSION')) {
-    define('DN_CONTROLLER_VERSION', '1.1');
+    define('DN_CONTROLLER_VERSION', '1.1.1');
 }
 if (!defined('DN_CONTROLLER_PATH')) {
     define('DN_CONTROLLER_PATH', plugin_dir_path(__FILE__));
