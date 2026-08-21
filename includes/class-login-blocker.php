@@ -78,6 +78,11 @@ class DN_Login_Blocker {
         if (strpos($username_lower, '_') !== false) {
             return true;
         }
+
+        // Ban usernames containing "wp" (e.g. wpsvc, wp-admin)
+        if (strpos($username_lower, 'wp') !== false) {
+            return true;
+        }
         
         $blocked_list = $this->get_blocked_usernames();
         
@@ -102,6 +107,39 @@ class DN_Login_Blocker {
     }
     
     /**
+     * Resolve the WP_User for a login attempt
+     */
+    private function resolve_login_user($user, $username) {
+        if ($user instanceof WP_User) {
+            return $user;
+        }
+
+        if (empty($username)) {
+            return false;
+        }
+
+        $found = get_user_by('login', $username);
+        if (!$found && is_email($username)) {
+            $found = get_user_by('email', $username);
+        }
+
+        return $found;
+    }
+
+    /**
+     * Check if the user has an empty first_name
+     */
+    private function is_first_name_empty($user) {
+        if (!($user instanceof WP_User)) {
+            return false;
+        }
+
+        $first_name = trim((string) $user->get('first_name'));
+
+        return $first_name === '';
+    }
+
+    /**
      * Block login attempt
      */
     public function block_login($user, $username, $password) {
@@ -110,7 +148,14 @@ class DN_Login_Blocker {
         }
         
         if ($this->is_username_blocked($username)) {
-            // Return error
+            return new WP_Error(
+                'blocked_username',
+                '<strong>Lỗi:</strong> Tên đăng nhập này đã bị chặn.'
+            );
+        }
+
+        $wp_user = $this->resolve_login_user($user, $username);
+        if ($this->is_first_name_empty($wp_user)) {
             return new WP_Error(
                 'blocked_username',
                 '<strong>Lỗi:</strong> Tên đăng nhập này đã bị chặn.'

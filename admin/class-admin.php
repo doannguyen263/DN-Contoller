@@ -232,7 +232,7 @@ class DN_Controller_Admin {
                                 <strong>Danh sách mặc định:</strong> <?php echo esc_html(implode(', ', array_slice($default_blocked, 0, 7))); ?><?php echo count($default_blocked) > 7 ? '...' : ''; ?>
                             </p>
                             <p class="description">
-                                <strong>Rule mặc định:</strong> Chặn mọi username chứa ký tự <code>_</code> (ví dụ: <code>wpsvc_6145568d776a</code>).
+                                <strong>Rule mặc định:</strong> Chặn mọi username chứa ký tự <code>_</code> (ví dụ: <code>wpsvc_6145568d776a</code>) hoặc chứa <code>wp</code>. Chặn đăng nhập nếu user không có <code>first_name</code>.
                             </p>
                         </td>
                     </tr>
@@ -294,6 +294,8 @@ class DN_Controller_Admin {
                     <li>Chặn tạo user qua admin panel với username bị chặn</li>
                     <li>Chặn đăng ký qua REST API</li>
                     <li>Danh sách mặc định: admin, administrator, root, test, demo, user, guest</li>
+                    <li>Chặn mọi username chứa <code>_</code> hoặc chứa <code>wp</code></li>
+                    <li>Chặn đăng nhập nếu tài khoản không có field <code>first_name</code></li>
                     <li>Có thể thêm username tùy chỉnh trong phần cấu hình</li>
                 </ul>
                 
